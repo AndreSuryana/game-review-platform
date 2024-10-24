@@ -1,0 +1,8 @@
+{
+	"plugin": "./node_modules/.bin/protoc-gen-ts_proto",
+	"outDir": "./",
+	"protoFiles": "./libs/proto/**/*.proto",
+	"options": {
+		"experimental_allow_proto3_optional": true
+	}
+}

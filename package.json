@@ -1,0 +1,14 @@
+{
+    "name": "game-review-platform",
+    "version": "0.0.1",
+    "description": "Game Review Platform",
+    "author": "Andre Suryana",
+    "private": true,
+    "license": "UNLICENSED",
+    "scripts": {
+        "build:proto": "node ./scripts/build-proto.js"
+    },
+    "devDependencies": {
+        "ts-proto": "^2.2.5"
+    }
+}

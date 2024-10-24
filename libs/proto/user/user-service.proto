@@ -1,0 +1,268 @@
+syntax = "proto3";
+
+package user;
+
+// User Service definition
+service UserService {
+  // Authentication
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
+  rpc LogoutUser(LogoutUserRequest) returns (LogoutUserResponse);
+  rpc RenewSession(RenewSessionRequest) returns (RenewSessionResponse);
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse);
+
+  // Password Management
+  rpc SendResetPassword(SendResetPasswordRequest) returns (SendResetPasswordResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse);
+
+  // Email Verification
+  rpc SendEmailVerification(SendEmailVerificationRequest) returns (SendEmailVerificationResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+
+  // Profile Management
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
+  rpc UploadProfilePicture(UploadProfilePictureRequest) returns (UploadProfilePictureResponse);
+  rpc UpdateUserPreferences(UpdateUserPreferencesRequest) returns (UpdateUserPreferencesResponse);
+
+  // Authorization
+  rpc AssignUserRole(AssignUserRoleRequest) returns (AssignUserRoleResponse);
+
+  // Activity and History Tracking
+  rpc GetLoginHistory(GetLoginHistoryRequest) returns (GetLoginHistoryResponse);
+  rpc GetActivityLogs(GetActivityLogsRequest) returns (GetActivityLogsResponse);
+
+  // Account Management
+  rpc LockAccount(LockAccountRequest) returns (LockAccountResponse);
+  rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+// Authentication Messages
+message RegisterUserRequest {
+  string email = 1;
+  optional string username = 2;
+  string password = 3;
+}
+
+message RegisterUserResponse {
+  optional string userId = 1;
+  string message = 2;
+}
+
+message AuthenticateUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message AuthenticateUserResponse {
+  string sessionToken = 1;
+}
+
+message LogoutUserRequest {
+  string sessionToken = 1;
+}
+
+message LogoutUserResponse {
+  string message = 1;
+}
+
+message RenewSessionRequest {
+  string sessionToken = 1;
+}
+
+message RenewSessionResponse {
+  string newSessionToken = 1;
+  string expiresAt = 2;
+}
+
+message RevokeSessionRequest {
+  string sessionToken = 1;
+}
+
+message RevokeSessionResponse {
+  string message = 1;
+}
+
+// Password Management Messages
+message SendResetPasswordRequest {
+  string email = 1;
+}
+
+message SendResetPasswordResponse {
+  string message = 1;
+}
+
+message ResetPasswordRequest {
+  string resetToken = 1;
+  string newPassword = 2;
+}
+
+message ResetPasswordResponse {
+  string message = 1;
+}
+
+message UpdatePasswordRequest {
+  string userId = 1;
+  string oldPassword = 2;
+  string newPassword = 3;
+}
+
+message UpdatePasswordResponse {
+  string message = 1;
+}
+
+// Email Verification Messages
+message SendEmailVerificationRequest {
+  string email = 1;
+}
+
+message SendEmailVerificationResponse {
+  string message = 1;
+}
+
+message VerifyEmailRequest {
+  string verificationToken = 1;
+}
+
+message VerifyEmailResponse {
+  string message = 1;
+}
+
+// Profile Management Messages
+message GetUserProfileRequest {
+  string userId = 1;
+}
+
+message GetUserProfileResponse {
+  string userId = 1;
+  string firstName = 2;
+  string lastName = 3;
+  optional string avatarUrl = 4;
+  optional string bio = 5;
+  optional Address address = 6;
+  Preferences preferences = 7;
+}
+
+message UpdateUserProfileRequest {
+  string userId = 1;
+  string firstName = 2;
+  string lastName = 3;
+  optional string bio = 4;
+  optional Address address = 5;
+}
+
+message UpdateUserProfileResponse {
+  string message = 1;
+}
+
+message UploadProfilePictureRequest {
+  string userId = 1;
+  bytes picture = 2;
+}
+
+message UploadProfilePictureResponse {
+  string avatarUrl = 1;
+}
+
+message UpdateUserPreferencesRequest {
+  string userId = 1;
+  Preferences preferences = 2;
+}
+
+message UpdateUserPreferencesResponse {
+  string message = 1;
+}
+
+// Authorization Messages
+message AssignUserRoleRequest {
+  string userId = 1;
+  string role = 2;
+}
+
+message AssignUserRoleResponse {
+  string message = 1;
+}
+
+// Activity and History Messages
+message GetLoginHistoryRequest {
+  string userId = 1;
+}
+
+message GetLoginHistoryResponse {
+  repeated LoginHistory logs = 1;
+}
+
+message LoginHistory {
+  string loginAt = 1;
+  string ipAddress = 2;
+  string device = 3;
+  string location = 4;
+}
+
+message GetActivityLogsRequest {
+  string userId = 1;
+}
+
+message GetActivityLogsResponse {
+  repeated ActivityLog logs = 1;
+}
+
+message ActivityLog {
+  string action = 1;
+  string timestamp = 2;
+  string ipAddress = 3;
+  string device = 4;
+  repeated ActivityLogDetail details = 5;
+}
+
+message ActivityLogDetail {
+  string fieldUpdated = 1;
+  string previousValue = 2;
+  string newValue = 3;
+}
+
+// Account Management Messages
+message LockAccountRequest {
+  string userId = 1;
+}
+
+message LockAccountResponse {
+  string message = 1;
+}
+
+message UnlockAccountRequest {
+  string userId = 1;
+}
+
+message UnlockAccountResponse {
+  string message = 1;
+}
+
+message DeleteAccountRequest {
+  string userId = 1;
+}
+
+message DeleteAccountResponse {
+  string message = 1;
+}
+
+// Shared Types
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string zipCode = 4;
+  string country = 5;
+}
+
+message Preferences {
+  string language = 1;
+  repeated NotificationSettings notifications = 2;
+}
+
+message NotificationSettings {
+  string channel = 1;
+  bool enabled = 2;
+}
