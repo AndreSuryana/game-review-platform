@@ -1,5 +1,5 @@
 export interface GrpcConfig {
-    url: string;
-    package: string;
-    protoPath: string;
+  url: string;
+  package: string;
+  protoPath: string;
 }

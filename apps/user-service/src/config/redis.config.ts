@@ -1,5 +1,5 @@
 export interface RedisConfig {
-    host: string;
-    port: number;
-    password: string | null;
+  host: string;
+  port: number;
+  password: string | null;
 }
