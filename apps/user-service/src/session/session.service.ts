@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { SessionConfig } from 'src/config/session.config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { RevokeSessionDto } from './dto/revoke-session.dto';
+import { RenewSessionDto } from './dto/renew-session.dto';
 
 @Injectable()
 export class SessionService {
@@ -81,7 +83,7 @@ export class SessionService {
   async findSession(token: string): Promise<Session> {
     // TODO: Search in Redis first, if not exists try to search in Session collection
 
-    const session = this.sessionModel.findOne({
+    const session = await this.sessionModel.findOne({
       $and: [{ sessionToken: token }, { isActive: true }],
     });
 
@@ -89,10 +91,7 @@ export class SessionService {
   }
 
   async updateActivity(token: string): Promise<void> {
-    const session = this.sessionModel.findOne({
-      $and: [{ sessionToken: token }, { isActive: true }],
-    });
-
+    const session = await this.findSession(token);
     if (!session) {
       throw new NotFoundException('Session is inactive or does not exist');
     }
@@ -106,10 +105,7 @@ export class SessionService {
   }
 
   async invalidate(token: string): Promise<void> {
-    const session = this.sessionModel.findOne({
-      $and: [{ sessionToken: token }, { isActive: true }],
-    });
-
+    const session = await this.findSession(token);
     if (!session) {
       throw new NotFoundException('Session is inactive or does not exist');
     }
@@ -119,11 +115,30 @@ export class SessionService {
     // TODO: Remove the session from Redis
   }
 
-  async revoke(token: string, reason: string): Promise<void> {
-    const session = this.sessionModel.findOne({
-      $and: [{ sessionToken: token }, { isActive: true }],
-    });
+  async renewSession(renewSessionDto: RenewSessionDto): Promise<Session> {
+    const { sessionToken } = renewSessionDto;
 
+    const oldSession = await this.findSession(sessionToken);
+    if (!oldSession) {
+      throw new NotFoundException('Session is inactive or does not exist');
+    }
+
+    const newSession = await this.createSession(
+      oldSession.userId,
+      oldSession.ipAddress,
+      oldSession.userAgent,
+    );
+
+    // FIXME: Don't hardcode the 'reason', make it into enums
+    this.revoke({ sessionToken: oldSession.sessionToken, reason: 'Renewed' });
+
+    return newSession;
+  }
+
+  async revoke(revokeSessionDto: RevokeSessionDto): Promise<void> {
+    const { sessionToken, reason } = revokeSessionDto;
+
+    const session = await this.findSession(sessionToken);
     if (!session) {
       throw new NotFoundException('Session is inactive or does not exist');
     }

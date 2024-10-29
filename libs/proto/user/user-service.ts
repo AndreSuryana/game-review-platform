@@ -49,6 +49,7 @@ export interface RenewSessionResponse {
 
 export interface RevokeSessionRequest {
   sessionToken: string;
+  reason: string;
 }
 
 export interface RevokeSessionResponse {
@@ -790,13 +791,16 @@ export const RenewSessionResponse: MessageFns<RenewSessionResponse> = {
 };
 
 function createBaseRevokeSessionRequest(): RevokeSessionRequest {
-  return { sessionToken: "" };
+  return { sessionToken: "", reason: "" };
 }
 
 export const RevokeSessionRequest: MessageFns<RevokeSessionRequest> = {
   encode(message: RevokeSessionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.sessionToken !== "") {
       writer.uint32(10).string(message.sessionToken);
+    }
+    if (message.reason !== "") {
+      writer.uint32(18).string(message.reason);
     }
     return writer;
   },
@@ -816,6 +820,14 @@ export const RevokeSessionRequest: MessageFns<RevokeSessionRequest> = {
           message.sessionToken = reader.string();
           continue;
         }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -826,13 +838,19 @@ export const RevokeSessionRequest: MessageFns<RevokeSessionRequest> = {
   },
 
   fromJSON(object: any): RevokeSessionRequest {
-    return { sessionToken: isSet(object.sessionToken) ? globalThis.String(object.sessionToken) : "" };
+    return {
+      sessionToken: isSet(object.sessionToken) ? globalThis.String(object.sessionToken) : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+    };
   },
 
   toJSON(message: RevokeSessionRequest): unknown {
     const obj: any = {};
     if (message.sessionToken !== "") {
       obj.sessionToken = message.sessionToken;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
     }
     return obj;
   },
@@ -843,6 +861,7 @@ export const RevokeSessionRequest: MessageFns<RevokeSessionRequest> = {
   fromPartial<I extends Exact<DeepPartial<RevokeSessionRequest>, I>>(object: I): RevokeSessionRequest {
     const message = createBaseRevokeSessionRequest();
     message.sessionToken = object.sessionToken ?? "";
+    message.reason = object.reason ?? "";
     return message;
   },
 };
