@@ -37,6 +37,6 @@ async function bootstrap() {
 
   // Start the service
   await app.startAllMicroservices();
-  logger.log(`gRPC microservice is running on ${gRpcConfig.url}`);
+  logger.log(`User service is running on ${gRpcConfig.url}`);
 }
 bootstrap();
