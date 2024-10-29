@@ -15,7 +15,7 @@ export class User extends Document {
   @Prop({ required: true })
   passwordSalt: string;
 
-  @Prop({ required: true, default: 'user' }) // TODO: Make a type for this role! Don't use hardcoded value!
+  @Prop({ required: true })
   role: string;
 
   @Prop({ default: false })

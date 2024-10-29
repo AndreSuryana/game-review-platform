@@ -5,10 +5,12 @@ import configuration from 'src/config/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseConfig } from 'src/config/database.config';
 import { UserModule } from './user/user.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
+      isGlobal: true,
       load: [configuration],
     }),
     MongooseModule.forRootAsync({
@@ -28,6 +30,8 @@ import { UserModule } from './user/user.module';
     }),
     AuthModule,
     UserModule,
+    SessionModule,
   ],
+  providers: [],
 })
 export class AppModule {}
