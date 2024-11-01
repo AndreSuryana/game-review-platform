@@ -49,10 +49,6 @@ export class SessionService {
       expiresAt,
       ipAddress,
       userAgent,
-      metadata: {
-        os: this.getUserOS(userAgent),
-        deviceType: this.getDeviceType(userAgent),
-      },
     });
     session.save();
 
@@ -169,19 +165,5 @@ export class SessionService {
     const token = Buffer.from(`${sessionId}.${hmacDigest}`);
 
     return token.toString('base64url'); // URL-safe encoding
-  }
-
-  private getUserOS(userAgent: string): string {
-    if (userAgent.includes('Windows')) return 'Windows';
-    if (userAgent.includes('Mac')) return 'MacOS';
-    if (userAgent.includes('Linux')) return 'Linux';
-    if (userAgent.includes('Android')) return 'Android';
-    if (userAgent.includes('iPhone')) return 'iOS';
-    return 'Unknown';
-  }
-
-  private getDeviceType(userAgent: string): string {
-    if (userAgent.includes('Mobile')) return 'mobile';
-    return 'desktop';
   }
 }
