@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { RevokeReason } from '../enums/revoke-reason.enum';
 
 @Schema()
 class Metadata {
@@ -36,7 +37,7 @@ export class Session extends Document {
   @Prop()
   revokedAt: Date;
 
-  @Prop()
+  @Prop({ enum: Object.values(RevokeReason) })
   revokedReason: string;
 
   @Prop()

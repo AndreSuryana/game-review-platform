@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RenewSessionDto } from './dto/renew-session.dto';
+import { RevokeReason } from './enums/revoke-reason.enum';
 
 @Injectable()
 export class SessionService {
@@ -129,8 +130,7 @@ export class SessionService {
       oldSession.userAgent,
     );
 
-    // FIXME: Don't hardcode the 'reason', make it into enums
-    this.revoke({ sessionToken: oldSession.sessionToken, reason: 'Renewed' });
+    this.revoke({ sessionToken: oldSession.sessionToken, reason: RevokeReason.NewTokenRequested });
 
     return newSession;
   }
