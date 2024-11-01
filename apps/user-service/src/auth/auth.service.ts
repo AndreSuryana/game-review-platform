@@ -15,6 +15,7 @@ import { UserRole } from 'src/user/enums/user-role.enum';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
 import { LogoutDto } from './dto/logout.dto';
+import { RequestMetadata } from 'src/common/metadata/request.metadata';
 
 @Injectable()
 export class AuthService {
@@ -55,6 +56,7 @@ export class AuthService {
 
   async authenticate(
     userCredentialsDto: UserCredentialsDto,
+    metadata: RequestMetadata
   ): Promise<{ userId: string; sessionToken: string }> {
     const { username, email, password } = userCredentialsDto;
 
@@ -80,11 +82,10 @@ export class AuthService {
     }
 
     // Generate user session token
-    // FIXME: The IP Address & User Agent data is a dummy data! Fix this later!
     const session = await this.sessionService.createSession(
       user.id,
-      '192.168.1.1',
-      'Dummy-User-Agent',
+      metadata.ipAddress,
+      metadata.userAgent,
     );
 
     // Return the user session token

@@ -14,10 +14,12 @@ import { AuthService } from './auth.service';
 import { UserCredentialsDto } from './dto/user-credentials.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { Metadata } from '@grpc/grpc-js';
+import { parseMetadata } from 'src/common/helpers/metadata.helper';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   private readonly logger: Logger = new Logger(AuthController.name, {
     timestamp: true,
@@ -49,6 +51,7 @@ export class AuthController {
   @GrpcMethod('UserService', 'AuthenticateUser')
   async authenticateUser(
     request: AuthenticateUserRequest,
+    metadata: Metadata,
   ): Promise<AuthenticateUserResponse> {
     try {
       const userCredentials = await validateConvertDto(
@@ -56,7 +59,7 @@ export class AuthController {
         request,
       );
 
-      const session = await this.authService.authenticate(userCredentials);
+      const session = await this.authService.authenticate(userCredentials, parseMetadata(metadata));
       this.logger.log(`User ${session.userId} authenticated`);
 
       return { sessionToken: session.sessionToken };
