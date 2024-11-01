@@ -16,7 +16,7 @@ export class Session extends Document {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true }) // FIXME: May required to be indexed?
+  @Prop({ required: true, unique: true, index: true })
   sessionToken: string;
 
   @Prop()
