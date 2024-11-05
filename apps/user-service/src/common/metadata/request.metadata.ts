@@ -1,4 +1,4 @@
 export class RequestMetadata {
-    readonly userAgent: string;
-    readonly ipAddress: string;
+  readonly userAgent: string;
+  readonly ipAddress: string;
 }

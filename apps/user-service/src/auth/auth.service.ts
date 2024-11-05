@@ -10,7 +10,6 @@ import { UserCredentialsDto } from 'src/auth/dto/user-credentials.dto';
 import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/schemas/user.schema';
-import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserRole } from 'src/user/enums/user-role.enum';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
@@ -56,7 +55,7 @@ export class AuthService {
 
   async authenticate(
     userCredentialsDto: UserCredentialsDto,
-    metadata: RequestMetadata
+    metadata: RequestMetadata,
   ): Promise<{ userId: string; sessionToken: string }> {
     const { username, email, password } = userCredentialsDto;
 
@@ -115,12 +114,34 @@ export class AuthService {
     this.logger.log(`Session invalidated! Session ID=${session.id}`);
   }
 
-  async changePassword(
+  async updatePassword(
     userId: string,
-    changePasswordDto: ChangePasswordDto,
+    oldPassword: string,
+    newPassword: string,
   ): Promise<void> {
-    // TODO: Not yet implemented!
-    throw new NotImplementedException();
+    const user = await this.userService.findUserById(userId);
+    if (!user || !user.isActive) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Compare user password with the old password
+    const passwordValid = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!passwordValid) {
+      throw new UnauthorizedException('Invalid old password');
+    }
+
+    // Validate the old password is not same as the new password
+    if (oldPassword === newPassword) {
+      throw new BadRequestException(
+        'New password should not be same as old password',
+      );
+    }
+
+    // Generate password salt and hash
+    const passwordSalt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(newPassword, passwordSalt);
+
+    await user.updateOne({ passwordSalt, passwordHash });
   }
 
   async sendPasswordResetEmail(email: string): Promise<void> {

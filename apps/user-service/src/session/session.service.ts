@@ -126,7 +126,10 @@ export class SessionService {
       oldSession.userAgent,
     );
 
-    this.revoke({ sessionToken: oldSession.sessionToken, reason: RevokeReason.NewTokenRequested });
+    this.revoke({
+      sessionToken: oldSession.sessionToken,
+      reason: RevokeReason.NewTokenRequested,
+    });
 
     return newSession;
   }

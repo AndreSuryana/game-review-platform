@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotImplementedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,7 +14,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-  ) {}
+  ) { }
+
+  private readonly logger: Logger = new Logger(UserService.name, {
+    timestamp: true,
+  });
 
   async insertUser(createUserDto: CreateUserDto): Promise<User> {
     const { username, email, passwordHash, passwordSalt, role } = createUserDto;
@@ -37,25 +42,45 @@ export class UserService {
   }
 
   async findUser(username: string, email: string): Promise<User | null> {
-    const user = await this.userModel.findOne({
-      $or: [{ email }, { username }],
-    });
-    return user || null;
+    try {
+      const user = await this.userModel.findOne({
+        $or: [{ email }, { username }],
+      });
+      return user || null;
+    } catch (e) {
+      this.logger.error(`Error finding user: ${e.message}`, e.stack);
+      return null;
+    }
   }
 
   async findUserById(userId: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ _id: userId });
-    return user || null;
+    try {
+      const user = await this.userModel.findOne({ _id: userId });
+      return user || null
+    } catch (e) {
+      this.logger.error(`Error finding user by id: ${e.message}`, e.stack);
+      return null;
+    }
   }
 
   async findUserByUsername(username: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ username });
-    return user || null;
+    try {
+      const user = await this.userModel.findOne({ username });
+      return user || null;
+    } catch (e) {
+      this.logger.error(`Error finding user by username: ${e.message}`, e.stack);
+      return null;
+    }
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ email });
-    return user || null;
+    try {
+      const user = await this.userModel.findOne({ email });
+      return user || null;
+    } catch (e) {
+      this.logger.error(`Error finding user by email: ${e.message}`, e.stack);
+      return null;
+    }
   }
 
   async updateUser(
