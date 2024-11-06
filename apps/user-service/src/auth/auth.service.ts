@@ -178,7 +178,10 @@ export class AuthService {
       throw new NotFoundException('Could not find the user');
     }
 
-    // TODO: Update the user password
+    // Update the user password
+    await this.userService.updateUser(user.id, {
+      password: newPassword
+    });
   }
 
   async verifyEmail(token: string): Promise<void> {
