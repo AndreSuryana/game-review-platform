@@ -15,12 +15,17 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
 import { LogoutDto } from './dto/logout.dto';
 import { RequestMetadata } from 'src/common/metadata/request.metadata';
+import { PasswordResetTokenUtil } from './tokens/password-reset-token.util';
+import { ConfigService } from '@nestjs/config';
+import { PasswordResetConfig } from 'src/config/password-reset.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
+    private readonly passwordResetTokenUtil: PasswordResetTokenUtil,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger: Logger = new Logger(AuthService.name, {
@@ -145,17 +150,49 @@ export class AuthService {
   }
 
   async sendPasswordResetEmail(email: string): Promise<void> {
-    // TODO: Not yet implemented!
-    throw new NotImplementedException();
+    // Find the user by the provided email
+    const user = await this.userService.findUserByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Could not find the user');
+    }
+
+    // Generate the password reset token
+    const token = await this.passwordResetTokenUtil.generateToken(user.id);
+
+    // 
+    const passwordResetBaseUrl = this.configService.get<PasswordResetConfig>('passwordReset').url;
+    const passwordResetUrl = this.generateUrlWithQuery(passwordResetBaseUrl, { token });
+    
+    // TODO: Sent the reset password email asyncronously with the frontend linked token is generated!
+    this.logger.debug(`Password reset link: ${passwordResetUrl}`);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    // TODO: Not yet implemented!
-    throw new NotImplementedException();
+    // Validate the password reset token
+    const payload = await this.passwordResetTokenUtil.verifyToken(token);
+    this.logger.debug(`Payload:`, payload);
+
+    // Find the user by the ID stored in the payload
+    const user = await this.userService.findUserById(payload.sub);
+    if (!user) {
+      throw new NotFoundException('Could not find the user');
+    }
+
+    // TODO: Update the user password
   }
 
   async verifyEmail(token: string): Promise<void> {
     // TODO: Not yet implemented!
     throw new NotImplementedException();
+  }
+
+  private generateUrlWithQuery(baseUrl: string, queryParams: Record<string, string | number | boolean>): string {
+    const url = new URL(baseUrl);
+
+    Object.entries(queryParams).forEach(([key, value]) => {
+      url.searchParams.append(key, value.toString());
+    });
+
+    return url.toString();
   }
 }

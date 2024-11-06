@@ -114,11 +114,11 @@ export class AuthController {
     request: ResetPasswordRequest,
   ): Promise<ResetPasswordResponse> {
     try {
-      const { token, newPassword } = await validateConvertDto(
+      const { resetToken, newPassword } = await validateConvertDto(
         ResetPasswordDto,
         request,
       );
-      await this.authService.resetPassword(token, newPassword);
+      await this.authService.resetPassword(resetToken, newPassword);
       return { message: 'Password has been reset successfully' };
     } catch (e) {
       this.logger.error(`Error reset password: ${e.message}`, e.stack);

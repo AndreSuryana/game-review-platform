@@ -23,4 +23,9 @@ export default () => ({
     secret: process.env.SESSION_SECRET,
     expiresIn: parseInt(process.env.SESSION_EXPIRES_IN, 10) || 900,
   },
+  passwordReset: {
+    secret: process.env.PASS_RESET_SECRET,
+    expiresIn: process.env.PASS_RESET_EXPIRES_IN || '15m',
+    url: process.env.PASS_RESET_URL || 'localhost'
+  },
 });
