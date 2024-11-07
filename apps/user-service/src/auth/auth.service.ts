@@ -28,7 +28,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly passwordResetJwt: PasswordResetJwtService,
     private readonly emailVerificationJwt: EmailVerificationJwtService,
-  ) {}
+  ) { }
 
   private readonly logger: Logger = new Logger(AuthService.name, {
     timestamp: true,
@@ -199,6 +199,11 @@ export class AuthService {
         throw new NotFoundException('Could not find the user');
       }
 
+      // Check whether user is already verified
+      if (user.emailVerified) {
+        throw new BadRequestException('Email is already verified');
+      }
+
       userId = user.id;
     }
 
@@ -226,6 +231,11 @@ export class AuthService {
     const user = await this.userService.findUserByEmail(payload.email);
     if (!user) {
       throw new NotFoundException('Could not find the user');
+    }
+
+    // Check whether user is already verified
+    if (user.emailVerified) {
+      throw new BadRequestException('Email is already verified');
     }
 
     // Update the user verification status
