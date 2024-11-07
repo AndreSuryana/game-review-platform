@@ -15,20 +15,20 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
 import { LogoutDto } from './dto/logout.dto';
 import { RequestMetadata } from 'src/common/metadata/request.metadata';
-import { PasswordResetTokenUtil } from './tokens/password-reset-token.util';
 import { ConfigService } from '@nestjs/config';
 import { PasswordResetConfig } from 'src/config/password-reset.config';
-import { EmailVerificationTokenUtil } from './tokens/email-verification-token.util';
 import { EmailVerificationConfig } from 'src/config/email-verification.config';
+import { PasswordResetJwtService } from './tokens/password-reset-jwt.service';
+import { EmailVerificationJwtService } from './tokens/email-verification-jwt.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly passwordResetTokenUtil: PasswordResetTokenUtil,
-    private readonly emailVerificationTokenUtil: EmailVerificationTokenUtil,
     private readonly configService: ConfigService,
+    private readonly passwordResetJwt: PasswordResetJwtService,
+    private readonly emailVerificationJwt: EmailVerificationJwtService,
   ) {}
 
   private readonly logger: Logger = new Logger(AuthService.name, {
@@ -162,7 +162,7 @@ export class AuthService {
     }
 
     // Generate the password reset token
-    const token = await this.passwordResetTokenUtil.generateToken(user.id);
+    const token = await this.passwordResetJwt.generateToken(user.id);
 
     // 
     const passwordResetBaseUrl = this.configService.get<PasswordResetConfig>('passwordReset').url;
@@ -174,7 +174,7 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     // Validate the password reset token
-    const payload = await this.passwordResetTokenUtil.verifyToken(token);
+    const payload = await this.passwordResetJwt.verifyToken(token);
     this.logger.debug(`Payload:`, payload);
 
     // Find the user by the ID stored in the payload
@@ -201,7 +201,7 @@ export class AuthService {
     }
 
     // Generate email verification token
-    const token = await this.emailVerificationTokenUtil.generateToken(userId, email);
+    const token = await this.emailVerificationJwt.generateToken(userId, email);
 
     // Construct the front-end link
     const emailVerificationBaseUrl = this.configService.get<EmailVerificationConfig>('emailVerification').url;
@@ -213,7 +213,7 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<void> {
     // Validate the email verification token
-    const payload = await this.emailVerificationTokenUtil.verifyToken(token);
+    const payload = await this.emailVerificationJwt.verifyToken(token);
     this.logger.debug(`Payload:`, payload);
 
     // Find the user by the ID stored in the payload

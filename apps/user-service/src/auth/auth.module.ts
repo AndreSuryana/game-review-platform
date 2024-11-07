@@ -6,12 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
 import { SessionService } from 'src/session/session.service';
 import { Session, SessionSchema } from 'src/session/schemas/session.schema';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PasswordResetConfig } from 'src/config/password-reset.config';
-import { PasswordResetTokenUtil } from './tokens/password-reset-token.util';
-import { EmailVerificationTokenUtil } from './tokens/email-verification-token.util';
-import { EmailVerificationConfig } from 'src/config/email-verification.config';
+import { PasswordResetJwtService } from './tokens/password-reset-jwt.service';
+import { EmailVerificationJwtService } from './tokens/email-verification-jwt.service';
 
 @Module({
   imports: [
@@ -19,34 +15,8 @@ import { EmailVerificationConfig } from 'src/config/email-verification.config';
       { name: User.name, schema: UserSchema },
       { name: Session.name, schema: SessionSchema },
     ]),
-
-    // JWT Module for Password Reset
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const { secret, expiresIn } = configService.get<PasswordResetConfig>('passwordReset');
-        return {
-          secret,
-          signOptions: { expiresIn },
-        }
-      },
-      inject: [ConfigService],
-    }),
-
-    // JWT Module for Email Verification
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const { secret, expiresIn } = configService.get<EmailVerificationConfig>('emailVerification');
-        return {
-          secret,
-          signOptions: { expiresIn },
-        }
-      },
-      inject: [ConfigService],
-    }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService, SessionService, PasswordResetTokenUtil, EmailVerificationTokenUtil],
+  providers: [AuthService, UserService, SessionService, PasswordResetJwtService, EmailVerificationJwtService],
 })
 export class AuthModule { }
