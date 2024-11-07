@@ -1,5 +1,5 @@
 export interface EmailVerificationConfig {
-    secret: string;
-    expiresIn: string;
-    url: string;
+  secret: string;
+  expiresIn: string;
+  url: string;
 }

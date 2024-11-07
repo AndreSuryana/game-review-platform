@@ -151,12 +151,18 @@ export class AuthController {
 
   @GrpcMethod('UserService', 'SendEmailVerification')
   async sendEmailVerification(
-    request: SendEmailVerificationRequest
+    request: SendEmailVerificationRequest,
   ): Promise<SendEmailVerificationResponse> {
     try {
-      const { email } = await validateConvertDto(SendEmailVerificationDto, request);
+      const { email } = await validateConvertDto(
+        SendEmailVerificationDto,
+        request,
+      );
       await this.authService.sendEmailVerification(email);
-      return { message: 'Verification email sent successfully. Please check your inbox to verify your email address.' }
+      return {
+        message:
+          'Verification email sent successfully. Please check your inbox to verify your email address.',
+      };
     } catch (e) {
       this.logger.error(`Error send email verification: ${e.message}`, e.stack);
       throw handleError(e);
@@ -166,9 +172,14 @@ export class AuthController {
   @GrpcMethod('UserService', 'VerifyEmail')
   async verifyEmail(request: VerifyEmailRequest): Promise<VerifyEmailResponse> {
     try {
-      const { verificationToken } = await validateConvertDto(VerifyEmailDto, request);
+      const { verificationToken } = await validateConvertDto(
+        VerifyEmailDto,
+        request,
+      );
       await this.authService.verifyEmail(verificationToken);
-      return { message: 'Email verified successfully. Your account is now activated.' }
+      return {
+        message: 'Email verified successfully. Your account is now activated.',
+      };
     } catch (e) {
       this.logger.error(`Error verifying email: ${e.message}`, e.stack);
       throw handleError(e);

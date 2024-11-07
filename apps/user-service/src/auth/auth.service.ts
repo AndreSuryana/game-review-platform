@@ -3,7 +3,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  NotImplementedException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserCredentialsDto } from 'src/auth/dto/user-credentials.dto';
@@ -164,10 +163,13 @@ export class AuthService {
     // Generate the password reset token
     const token = await this.passwordResetJwt.generateToken(user.id);
 
-    // 
-    const passwordResetBaseUrl = this.configService.get<PasswordResetConfig>('passwordReset').url;
-    const passwordResetUrl = this.generateUrlWithQuery(passwordResetBaseUrl, { token });
-    
+    //
+    const passwordResetBaseUrl =
+      this.configService.get<PasswordResetConfig>('passwordReset').url;
+    const passwordResetUrl = this.generateUrlWithQuery(passwordResetBaseUrl, {
+      token,
+    });
+
     // TODO: Sent the reset password email asyncronously with the frontend linked token is generated!
     this.logger.debug(`Password reset link: ${passwordResetUrl}`);
   }
@@ -185,7 +187,7 @@ export class AuthService {
 
     // Update the user password
     await this.userService.updateUser(user.id, {
-      password: newPassword
+      password: newPassword,
     });
   }
 
@@ -196,7 +198,7 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('Could not find the user');
       }
-      
+
       userId = user.id;
     }
 
@@ -204,9 +206,13 @@ export class AuthService {
     const token = await this.emailVerificationJwt.generateToken(userId, email);
 
     // Construct the front-end link
-    const emailVerificationBaseUrl = this.configService.get<EmailVerificationConfig>('emailVerification').url;
-    const emailVerificationUrl = this.generateUrlWithQuery(emailVerificationBaseUrl, { token });
-    
+    const emailVerificationBaseUrl =
+      this.configService.get<EmailVerificationConfig>('emailVerification').url;
+    const emailVerificationUrl = this.generateUrlWithQuery(
+      emailVerificationBaseUrl,
+      { token },
+    );
+
     // TODO: Sent email verification asyncronously after user successfully registered!
     this.logger.debug(`Email verification link: ${emailVerificationUrl}`);
   }
@@ -228,7 +234,10 @@ export class AuthService {
     });
   }
 
-  private generateUrlWithQuery(baseUrl: string, queryParams: Record<string, string | number | boolean>): string {
+  private generateUrlWithQuery(
+    baseUrl: string,
+    queryParams: Record<string, string | number | boolean>,
+  ): string {
     const url = new URL(baseUrl);
 
     Object.entries(queryParams).forEach(([key, value]) => {

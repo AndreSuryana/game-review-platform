@@ -17,6 +17,12 @@ import { EmailVerificationJwtService } from './tokens/email-verification-jwt.ser
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService, SessionService, PasswordResetJwtService, EmailVerificationJwtService],
+  providers: [
+    AuthService,
+    UserService,
+    SessionService,
+    PasswordResetJwtService,
+    EmailVerificationJwtService,
+  ],
 })
-export class AuthModule { }
+export class AuthModule {}

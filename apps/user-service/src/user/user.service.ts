@@ -124,7 +124,6 @@ export class UserService {
       user.passwordSalt = passwordSalt;
     }
 
-
     // Update the user data
     for (const [key, value] of Object.entries(otherUpdates)) {
       if (value !== undefined && value !== null) {
