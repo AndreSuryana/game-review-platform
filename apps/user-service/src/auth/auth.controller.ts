@@ -9,10 +9,14 @@ import {
   RegisterUserResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  SendEmailVerificationRequest,
+  SendEmailVerificationResponse,
   SendResetPasswordRequest,
   SendResetPasswordResponse,
   UpdatePasswordRequest,
   UpdatePasswordResponse,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
 } from '@grp/proto/user/user-service';
 import { validateConvertDto } from 'src/common/helpers/validation-pipe.helper';
 import { handleError } from 'src/common/handlers/exception.handler';
@@ -25,6 +29,8 @@ import { parseMetadata } from 'src/common/helpers/metadata.helper';
 import { SendResetPasswordDto } from './dto/send-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { SendEmailVerificationDto } from './dto/send-email-verification.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -139,6 +145,32 @@ export class AuthController {
       return { message: 'Password updated successfully' };
     } catch (e) {
       this.logger.error(`Error update password: ${e.message}`, e.stack);
+      throw handleError(e);
+    }
+  }
+
+  @GrpcMethod('UserService', 'SendEmailVerification')
+  async sendEmailVerification(
+    request: SendEmailVerificationRequest
+  ): Promise<SendEmailVerificationResponse> {
+    try {
+      const { email } = await validateConvertDto(SendEmailVerificationDto, request);
+      await this.authService.sendEmailVerification(email);
+      return { message: 'Verification email sent successfully. Please check your inbox to verify your email address.' }
+    } catch (e) {
+      this.logger.error(`Error send email verification: ${e.message}`, e.stack);
+      throw handleError(e);
+    }
+  }
+
+  @GrpcMethod('UserService', 'VerifyEmail')
+  async verifyEmail(request: VerifyEmailRequest): Promise<VerifyEmailResponse> {
+    try {
+      const { verificationToken } = await validateConvertDto(VerifyEmailDto, request);
+      await this.authService.verifyEmail(verificationToken);
+      return { message: 'Email verified successfully. Your account is now activated.' }
+    } catch (e) {
+      this.logger.error(`Error verifying email: ${e.message}`, e.stack);
       throw handleError(e);
     }
   }

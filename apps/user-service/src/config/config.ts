@@ -26,6 +26,11 @@ export default () => ({
   passwordReset: {
     secret: process.env.PASS_RESET_SECRET,
     expiresIn: process.env.PASS_RESET_EXPIRES_IN || '15m',
-    url: process.env.PASS_RESET_URL || 'localhost'
+    url: process.env.PASS_RESET_URL || 'localhost',
+  },
+  emailVerification: {
+    secret: process.env.EMAIL_VERIFICATION_SECRET,
+    expiresIn: process.env.EMAIL_VERIFICATION_EXPIRES_IN || '24h',
+    url: process.env.EMAIL_VERIFICATION_URL || 'localhost',
   },
 });

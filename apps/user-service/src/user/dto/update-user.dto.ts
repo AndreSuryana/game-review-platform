@@ -17,4 +17,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserRole)
   readonly role?: UserRole;
+
+  @IsOptional()
+  readonly emailVerified?: boolean;
 }

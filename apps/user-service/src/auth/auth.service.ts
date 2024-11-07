@@ -18,6 +18,8 @@ import { RequestMetadata } from 'src/common/metadata/request.metadata';
 import { PasswordResetTokenUtil } from './tokens/password-reset-token.util';
 import { ConfigService } from '@nestjs/config';
 import { PasswordResetConfig } from 'src/config/password-reset.config';
+import { EmailVerificationTokenUtil } from './tokens/email-verification-token.util';
+import { EmailVerificationConfig } from 'src/config/email-verification.config';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +27,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
     private readonly passwordResetTokenUtil: PasswordResetTokenUtil,
+    private readonly emailVerificationTokenUtil: EmailVerificationTokenUtil,
     private readonly configService: ConfigService,
   ) {}
 
@@ -53,7 +56,9 @@ export class AuthService {
     });
     this.logger.debug(`New user successfully added! ${newUser.id}`);
 
-    // TODO: Sent email verification asyncronously after user successfully registered!
+    // FIXME: Use background jobs with a queue for sending email verification asyncronously! Use: @nestjs/bull
+    // Reference: https://docs.nestjs.com/techniques/queues
+    await this.sendEmailVerification(newUser.email, newUser.id);
 
     return newUser.id;
   }
@@ -184,9 +189,43 @@ export class AuthService {
     });
   }
 
+  async sendEmailVerification(email: string, userId?: string): Promise<void> {
+    // Find the user ID if not provided
+    if (!userId) {
+      const user = await this.userService.findUserByEmail(email);
+      if (!user) {
+        throw new NotFoundException('Could not find the user');
+      }
+      
+      userId = user.id;
+    }
+
+    // Generate email verification token
+    const token = await this.emailVerificationTokenUtil.generateToken(userId, email);
+
+    // Construct the front-end link
+    const emailVerificationBaseUrl = this.configService.get<EmailVerificationConfig>('emailVerification').url;
+    const emailVerificationUrl = this.generateUrlWithQuery(emailVerificationBaseUrl, { token });
+    
+    // TODO: Sent email verification asyncronously after user successfully registered!
+    this.logger.debug(`Email verification link: ${emailVerificationUrl}`);
+  }
+
   async verifyEmail(token: string): Promise<void> {
-    // TODO: Not yet implemented!
-    throw new NotImplementedException();
+    // Validate the email verification token
+    const payload = await this.emailVerificationTokenUtil.verifyToken(token);
+    this.logger.debug(`Payload:`, payload);
+
+    // Find the user by the ID stored in the payload
+    const user = await this.userService.findUserByEmail(payload.email);
+    if (!user) {
+      throw new NotFoundException('Could not find the user');
+    }
+
+    // Update the user verification status
+    await this.userService.updateUser(user.id, {
+      emailVerified: true,
+    });
   }
 
   private generateUrlWithQuery(baseUrl: string, queryParams: Record<string, string | number | boolean>): string {
