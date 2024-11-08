@@ -19,6 +19,7 @@ import { PasswordResetConfig } from 'src/config/password-reset.config';
 import { EmailVerificationConfig } from 'src/config/email-verification.config';
 import { PasswordResetJwtService } from './tokens/password-reset-jwt.service';
 import { EmailVerificationJwtService } from './tokens/email-verification-jwt.service';
+import { RevokeReason } from 'src/session/enums/revoke-reason.enum';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly passwordResetJwt: PasswordResetJwtService,
     private readonly emailVerificationJwt: EmailVerificationJwtService,
-  ) { }
+  ) {}
 
   private readonly logger: Logger = new Logger(AuthService.name, {
     timestamp: true,
@@ -90,7 +91,7 @@ export class AuthService {
     }
 
     // Generate user session token
-    const session = await this.sessionService.createSession(
+    const token = await this.sessionService.generateToken(
       user.id,
       metadata.ipAddress,
       metadata.userAgent,
@@ -98,29 +99,20 @@ export class AuthService {
 
     // Return the user session token
     return {
-      userId: session.userId,
-      sessionToken: session.sessionToken,
+      userId: user.id,
+      sessionToken: token,
     };
   }
 
   async logout(logoutDto: LogoutDto): Promise<void> {
     const { sessionToken } = logoutDto;
 
-    // Check if the session is active
-    const session = await this.sessionService.findSession(sessionToken);
-    if (!session || !session.isActive) {
-      throw new UnauthorizedException('Session is inactive or does not exist');
-    }
-
     // Validate the session token
-    const isValidSession = this.sessionService.validateSession(sessionToken);
-    if (!isValidSession) {
-      throw new UnauthorizedException('Invalid session token');
-    }
+    const payload = await this.sessionService.verifyToken(sessionToken);
 
     // Invalidate session token
-    await session.updateOne({ isActive: false });
-    this.logger.log(`Session invalidated! Session ID=${session.id}`);
+    await this.sessionService.revoke(sessionToken, RevokeReason.UserLogout);
+    this.logger.debug('Session invalidated', payload);
   }
 
   async updatePassword(

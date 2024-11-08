@@ -41,4 +41,9 @@ export enum RevokeReason {
    * An admin revoked the token due to account concerns.
    */
   AdminRevoked = 'Admin Revoked',
+
+  /**
+   * The user logged out, invalidating the session token.
+   */
+  UserLogout = 'User Logout',
 }

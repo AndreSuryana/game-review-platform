@@ -1,16 +1,28 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Session, SessionSchema } from './schemas/session.schema';
 import { SessionService } from './session.service';
 import { ConfigService } from '@nestjs/config';
 import { SessionController } from './session.controller';
+import { JwtModule } from '@nestjs/jwt';
+import { SessionConfig } from 'src/config/session.config';
+import { RedisProvider } from 'src/redis/providers/redis.provider';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
+    // JWT for Session Token
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => {
+        const { secret, expiresIn } =
+          configService.get<SessionConfig>('session');
+        return {
+          secret,
+          signOptions: { expiresIn },
+        };
+      },
+      inject: [ConfigService],
+    }),
   ],
-  providers: [SessionService, ConfigService],
-  exports: [SessionService],
+  providers: [SessionService, ConfigService, RedisProvider],
+  exports: [SessionService, JwtModule, RedisProvider],
   controllers: [SessionController],
 })
 export class SessionModule {}

@@ -16,12 +16,14 @@ export default () => ({
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT, 10) || '6379',
-    password: process.env.REDIS_PASSWORD || '',
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    username: process.env.REDIS_USERNAME,
+    password: process.env.REDIS_PASSWORD,
+    threshold: parseInt(process.env.REDIS_THRESHOLD, 10) || 5,
   },
   session: {
     secret: process.env.SESSION_SECRET,
-    expiresIn: parseInt(process.env.SESSION_EXPIRES_IN, 10) || 900,
+    expiresIn: process.env.SESSION_EXPIRES_IN || '15m',
   },
   passwordReset: {
     secret: process.env.PASS_RESET_SECRET,
