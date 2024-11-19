@@ -57,7 +57,7 @@ export class AuthService {
     });
     this.logger.debug(`New user successfully added! ${newUser.id}`);
 
-    this.emailService.sendVerificationEmail(newUser.id, newUser.email);
+    this.emailService.sendVerificationEmail(newUser.email);
 
     return newUser.id;
   }
@@ -183,7 +183,7 @@ export class AuthService {
       throw new BadRequestException('Email is already verified');
     }
 
-    this.emailService.sendVerificationEmail(user.id, user.email);
+    this.emailService.sendVerificationEmail(user.email);
   }
 
   async verifyEmail(token: string): Promise<void> {
@@ -208,11 +208,8 @@ export class AuthService {
     });
   }
 
-  async generateEmailVerificationToken(
-    userId: string,
-    email: string,
-  ): Promise<string> {
-    return await this.emailVerificationJwt.generateToken(userId, email);
+  async generateEmailVerificationToken(email: string): Promise<string> {
+    return await this.emailVerificationJwt.generateToken(email);
   }
 
   async generatePasswordResetToken(userId: string): Promise<string> {

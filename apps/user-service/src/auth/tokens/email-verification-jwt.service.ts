@@ -24,8 +24,8 @@ export class EmailVerificationJwtService {
     });
   }
 
-  async generateToken(userId: string, email: string): Promise<string> {
-    const payload = { sub: userId, email };
+  async generateToken(email: string): Promise<string> {
+    const payload = { email };
     return this.jwtService.signAsync(payload);
   }
 

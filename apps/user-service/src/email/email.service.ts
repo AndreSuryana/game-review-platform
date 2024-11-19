@@ -20,14 +20,11 @@ export class EmailService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendVerificationEmail(userId: string, email: string) {
+  async sendVerificationEmail(email: string) {
     const config =
       this.configService.get<EmailVerificationConfig>('emailVerification');
 
-    const token = await this.authService.generateEmailVerificationToken(
-      userId,
-      email,
-    );
+    const token = await this.authService.generateEmailVerificationToken(email);
     const verificationLink = this.generateUrlWithQuery(config.url, { token });
 
     await this.emailQueue.add('send-email', {
