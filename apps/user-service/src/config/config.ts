@@ -35,4 +35,12 @@ export default () => ({
     expiresIn: process.env.EMAIL_VERIFICATION_EXPIRES_IN || '24h',
     url: process.env.EMAIL_VERIFICATION_URL || 'localhost',
   },
+  smtp: {
+    host: process.env.SMTP_HOST || 'localhost',
+    port: parseInt(process.env.SMTP_PORT, 10) || 25,
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    fromEmail: process.env.SMTP_FROM_EMAIL,
+    fromName: process.env.SMTP_FROM_NAME,
+  },
 });

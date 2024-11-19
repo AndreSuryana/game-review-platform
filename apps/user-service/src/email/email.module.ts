@@ -1,0 +1,28 @@
+import { forwardRef, Module } from '@nestjs/common';
+import { EmailService } from './email.service';
+import { EmailProcessor } from './email.processor';
+import { AuthModule } from 'src/auth/auth.module';
+import { BullModule } from '@nestjs/bullmq';
+import Redis from 'ioredis';
+import { REDIS_CLIENT } from 'src/redis/constants/redis.constant';
+import { RedisModule } from 'src/redis/redis.module';
+import { EmailConfigService } from './config/email-config.service';
+import { EMAIL_QUEUE } from './constants/email.constant';
+
+@Module({
+  imports: [
+    RedisModule,
+    BullModule.registerQueueAsync({
+      name: EMAIL_QUEUE,
+      imports: [RedisModule],
+      useFactory: async (redisClient: Redis) => ({
+        connection: redisClient,
+      }),
+      inject: [REDIS_CLIENT],
+    }),
+    forwardRef(() => AuthModule),
+  ],
+  providers: [EmailService, EmailProcessor, EmailConfigService],
+  exports: [EmailService],
+})
+export class EmailModule {}

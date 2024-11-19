@@ -6,6 +6,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseConfig } from 'src/config/database.config';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
+import { EmailModule } from './email/email.module';
+import { BullModule } from '@nestjs/bullmq';
+import { REDIS_CLIENT } from './redis/constants/redis.constant';
+import { RedisModule } from './redis/redis.module';
+import Redis from 'ioredis';
 
 @Module({
   imports: [
@@ -28,10 +33,18 @@ import { SessionModule } from './session/session.module';
       },
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [RedisModule],
+      useFactory: (redisClient: Redis) => ({
+        connection: redisClient,
+      }),
+      inject: [REDIS_CLIENT],
+    }),
     AuthModule,
     UserModule,
     SessionModule,
+    EmailModule,
+    RedisModule,
   ],
-  providers: [],
 })
 export class AppModule {}

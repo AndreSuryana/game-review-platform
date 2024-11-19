@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { SessionController } from './session.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { SessionConfig } from 'src/config/session.config';
-import { RedisProvider } from 'src/redis/providers/redis.provider';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -20,9 +20,10 @@ import { RedisProvider } from 'src/redis/providers/redis.provider';
       },
       inject: [ConfigService],
     }),
+    RedisModule,
   ],
-  providers: [SessionService, ConfigService, RedisProvider],
-  exports: [SessionService, JwtModule, RedisProvider],
+  providers: [SessionService, ConfigService],
+  exports: [SessionService, JwtModule],
   controllers: [SessionController],
 })
 export class SessionModule {}

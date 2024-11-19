@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,21 +16,20 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
 import { LogoutDto } from './dto/logout.dto';
 import { RequestMetadata } from 'src/common/metadata/request.metadata';
-import { ConfigService } from '@nestjs/config';
-import { PasswordResetConfig } from 'src/config/password-reset.config';
-import { EmailVerificationConfig } from 'src/config/email-verification.config';
 import { PasswordResetJwtService } from './tokens/password-reset-jwt.service';
 import { EmailVerificationJwtService } from './tokens/email-verification-jwt.service';
 import { RevokeReason } from 'src/session/enums/revoke-reason.enum';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly configService: ConfigService,
     private readonly passwordResetJwt: PasswordResetJwtService,
     private readonly emailVerificationJwt: EmailVerificationJwtService,
+    @Inject(forwardRef(() => EmailService))
+    private readonly emailService: EmailService,
   ) {}
 
   private readonly logger: Logger = new Logger(AuthService.name, {
@@ -56,9 +57,7 @@ export class AuthService {
     });
     this.logger.debug(`New user successfully added! ${newUser.id}`);
 
-    // FIXME: Use background jobs with a queue for sending email verification asyncronously! Use: @nestjs/bull
-    // Reference: https://docs.nestjs.com/techniques/queues
-    await this.sendEmailVerification(newUser.email, newUser.id);
+    this.emailService.sendVerificationEmail(newUser.id, newUser.email);
 
     return newUser.id;
   }
@@ -152,18 +151,7 @@ export class AuthService {
       throw new NotFoundException('Could not find the user');
     }
 
-    // Generate the password reset token
-    const token = await this.passwordResetJwt.generateToken(user.id);
-
-    //
-    const passwordResetBaseUrl =
-      this.configService.get<PasswordResetConfig>('passwordReset').url;
-    const passwordResetUrl = this.generateUrlWithQuery(passwordResetBaseUrl, {
-      token,
-    });
-
-    // TODO: Sent the reset password email asyncronously with the frontend linked token is generated!
-    this.logger.debug(`Password reset link: ${passwordResetUrl}`);
+    this.emailService.sendPasswordResetEmail(user.id, user.email);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -183,35 +171,19 @@ export class AuthService {
     });
   }
 
-  async sendEmailVerification(email: string, userId?: string): Promise<void> {
+  async sendEmailVerification(email: string): Promise<void> {
     // Find the user ID if not provided
-    if (!userId) {
-      const user = await this.userService.findUserByEmail(email);
-      if (!user) {
-        throw new NotFoundException('Could not find the user');
-      }
-
-      // Check whether user is already verified
-      if (user.emailVerified) {
-        throw new BadRequestException('Email is already verified');
-      }
-
-      userId = user.id;
+    const user = await this.userService.findUserByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Could not find the user');
     }
 
-    // Generate email verification token
-    const token = await this.emailVerificationJwt.generateToken(userId, email);
+    // Check whether user is already verified
+    if (user.emailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
 
-    // Construct the front-end link
-    const emailVerificationBaseUrl =
-      this.configService.get<EmailVerificationConfig>('emailVerification').url;
-    const emailVerificationUrl = this.generateUrlWithQuery(
-      emailVerificationBaseUrl,
-      { token },
-    );
-
-    // TODO: Sent email verification asyncronously after user successfully registered!
-    this.logger.debug(`Email verification link: ${emailVerificationUrl}`);
+    this.emailService.sendVerificationEmail(user.id, user.email);
   }
 
   async verifyEmail(token: string): Promise<void> {
@@ -236,16 +208,14 @@ export class AuthService {
     });
   }
 
-  private generateUrlWithQuery(
-    baseUrl: string,
-    queryParams: Record<string, string | number | boolean>,
-  ): string {
-    const url = new URL(baseUrl);
+  async generateEmailVerificationToken(
+    userId: string,
+    email: string,
+  ): Promise<string> {
+    return await this.emailVerificationJwt.generateToken(userId, email);
+  }
 
-    Object.entries(queryParams).forEach(([key, value]) => {
-      url.searchParams.append(key, value.toString());
-    });
-
-    return url.toString();
+  async generatePasswordResetToken(userId: string): Promise<string> {
+    return await this.passwordResetJwt.generateToken(userId);
   }
 }
