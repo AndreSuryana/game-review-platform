@@ -1,7 +1,5 @@
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,20 +14,17 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { SessionService } from 'src/session/session.service';
 import { LogoutDto } from './dto/logout.dto';
 import { RequestMetadata } from 'src/common/metadata/request.metadata';
-import { PasswordResetJwtService } from './tokens/password-reset-jwt.service';
-import { EmailVerificationJwtService } from './tokens/email-verification-jwt.service';
 import { RevokeReason } from 'src/session/enums/revoke-reason.enum';
 import { EmailService } from 'src/email/email.service';
+import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly passwordResetJwt: PasswordResetJwtService,
-    private readonly emailVerificationJwt: EmailVerificationJwtService,
-    @Inject(forwardRef(() => EmailService))
     private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   private readonly logger: Logger = new Logger(AuthService.name, {
@@ -160,7 +155,7 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     // Validate the password reset token
-    const payload = await this.passwordResetJwt.verifyToken(token);
+    const payload = await this.tokenService.verify(token, 'resetPassword');
     this.logger.debug(`Payload:`, payload);
 
     // Find the user by the ID stored in the payload
@@ -192,7 +187,7 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<void> {
     // Validate the email verification token
-    const payload = await this.emailVerificationJwt.verifyToken(token);
+    const payload = await this.tokenService.verify(token, 'emailVerification');
     this.logger.debug(`Payload:`, payload);
 
     // Find the user by the ID stored in the payload
@@ -210,13 +205,5 @@ export class AuthService {
     await this.userService.updateUser(user.id, {
       emailVerified: true,
     });
-  }
-
-  async generateEmailVerificationToken(email: string): Promise<string> {
-    return await this.emailVerificationJwt.generateToken(email);
-  }
-
-  async generatePasswordResetToken(userId: string): Promise<string> {
-    return await this.passwordResetJwt.generateToken(userId);
   }
 }

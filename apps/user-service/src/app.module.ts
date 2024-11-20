@@ -10,6 +10,7 @@ import { EmailModule } from './email/email.module';
 import { BullModule } from '@nestjs/bullmq';
 import { REDIS_CLIENT } from './redis/constants/redis.constant';
 import { RedisModule } from './redis/redis.module';
+import { TokenModule } from './token/token.module';
 import Redis from 'ioredis';
 
 @Module({
@@ -45,6 +46,7 @@ import Redis from 'ioredis';
     SessionModule,
     EmailModule,
     RedisModule,
+    TokenModule,
   ],
 })
 export class AppModule {}

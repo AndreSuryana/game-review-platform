@@ -3,6 +3,8 @@ import { Job, Worker } from 'bullmq';
 import { EmailConfigService } from './config/email-config.service';
 import { ConfigService } from '@nestjs/config';
 import { EMAIL_QUEUE } from './constants/email.constant';
+import { REDIS_CLIENT } from 'src/redis/constants/redis.constant';
+import Redis from 'ioredis';
 
 export class EmailProcessor {
   private readonly logger: Logger = new Logger(EmailProcessor.name, {
@@ -11,6 +13,7 @@ export class EmailProcessor {
 
   constructor(
     @Inject() private readonly emailConfigService: EmailConfigService,
+    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
     private readonly configService: ConfigService,
   ) {
     this.initWorker();
@@ -19,15 +22,8 @@ export class EmailProcessor {
   private initWorker() {
     const worker = new Worker(
       EMAIL_QUEUE,
-      async (job: Job) => {
-        await this.processJob(job);
-      },
-      {
-        connection: {
-          host: 'localhost',
-          port: 6379,
-        },
-      },
+      async (job: Job) => await this.processJob(job),
+      { connection: this.redisClient },
     );
 
     worker.on('completed', (job) => {

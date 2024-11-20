@@ -42,4 +42,8 @@ export default () => ({
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
+  email: {
+    support: process.env.EMAIL_SUPPORT || 'support@email.com',
+    noReply: process.env.EMAIL_NO_REPLY || 'no-reply@email.com',
+  },
 });

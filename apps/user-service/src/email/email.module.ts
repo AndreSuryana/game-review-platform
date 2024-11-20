@@ -1,7 +1,6 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { EmailProcessor } from './email.processor';
-import { AuthModule } from 'src/auth/auth.module';
 import { BullModule } from '@nestjs/bullmq';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from 'src/redis/constants/redis.constant';
@@ -9,6 +8,7 @@ import { RedisModule } from 'src/redis/redis.module';
 import { EmailConfigService } from './config/email-config.service';
 import { EMAIL_QUEUE } from './constants/email.constant';
 import { EmailTemplateService } from './email-template.service';
+import { TokenModule } from 'src/token/token.module';
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { EmailTemplateService } from './email-template.service';
       }),
       inject: [REDIS_CLIENT],
     }),
-    forwardRef(() => AuthModule),
+    TokenModule,
   ],
   providers: [
     EmailService,

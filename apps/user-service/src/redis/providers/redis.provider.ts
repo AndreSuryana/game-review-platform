@@ -13,6 +13,7 @@ export const RedisProvider: Provider = {
       port: redisConfig.port,
       username: redisConfig.username,
       password: redisConfig.password,
+      maxRetriesPerRequest: null, // Required for BullMQ
     });
   },
   inject: [ConfigService],

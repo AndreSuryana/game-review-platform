@@ -1,12 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
-import { AuthService } from 'src/auth/auth.service';
-import { EmailVerificationConfig } from 'src/config/email-verification.config';
-import { PasswordResetConfig } from 'src/config/password-reset.config';
 import { EMAIL_QUEUE } from './constants/email.constant';
 import { EmailTemplateService } from './email-template.service';
+import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class EmailService {
@@ -16,36 +14,45 @@ export class EmailService {
 
   constructor(
     @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue,
-    @Inject(forwardRef(() => AuthService))
-    private readonly authService: AuthService,
+    private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     private readonly templateService: EmailTemplateService,
   ) {}
 
+  private async queueEmail(
+    to: string,
+    subject: string,
+    template: string,
+    placeholders: Record<string, any>,
+  ) {
+    const emailTemplate = this.templateService.renderTemplate(
+      template,
+      placeholders,
+    );
+
+    await this.emailQueue.add('send-email', {
+      to,
+      subject,
+      text: this.templateService.convertHtmlToPlainText(emailTemplate),
+      html: emailTemplate,
+    });
+
+    this.logger.log(`Email queued for: ${to}, Subject: ${subject}`);
+  }
+
   async sendVerificationEmail(email: string, username: string) {
     try {
-      const config =
-        this.configService.get<EmailVerificationConfig>('emailVerification');
-
-      const token =
-        await this.authService.generateEmailVerificationToken(email);
+      const { token, config } = await this.tokenService.generate(
+        { email },
+        'emailVerification',
+      );
       const verificationLink = this.generateUrlWithQuery(config.url, { token });
 
-      const emailTemplate = this.templateService.renderTemplate(
-        'email-verification',
-        {
-          appName: this.configService.get<string>('appName'),
-          username,
-          verificationLink,
-          contactSupport: this.configService.get<string>('EMAIL_SUPPORT'),
-        },
-      );
-
-      await this.emailQueue.add('send-email', {
-        to: email,
-        subject: 'Verify Your Email',
-        text: this.templateService.convertHtmlToPlainText(emailTemplate),
-        html: emailTemplate,
+      await this.queueEmail(email, 'Verify Your Email', 'email-verification', {
+        appName: this.configService.get<string>('appName'),
+        username,
+        verificationLink,
+        contactSupport: this.configService.get<string>('email.support'),
       });
 
       this.logger.debug(`Verification email queued for: ${email}`);
@@ -59,27 +66,18 @@ export class EmailService {
     username: string,
     email: string,
   ) {
-    const config = this.configService.get<PasswordResetConfig>('passwordReset');
-
-    const token = await this.authService.generatePasswordResetToken(userId);
+    const { token, config } = await this.tokenService.generate(
+      { sub: userId },
+      'passwordReset',
+    );
     const resetLink = this.generateUrlWithQuery(config.url, { token });
 
-    const emailTemplate = this.templateService.renderTemplate(
-      'password-reset',
-      {
-        appName: this.configService.get<string>('appName'),
-        username,
-        resetLink,
-        expiresIn: this.formatExpirationTime(config.expiresIn),
-        contactSupport: this.configService.get<string>('EMAIL_SUPPORT'),
-      },
-    );
-
-    await this.emailQueue.add('send-email', {
-      to: email,
-      subject: 'Password Reset Request',
-      text: this.templateService.convertHtmlToPlainText(emailTemplate),
-      html: emailTemplate,
+    await this.queueEmail(email, 'Password Reset Request', 'password-reset', {
+      appName: this.configService.get<string>('appName'),
+      username,
+      resetLink,
+      expiresIn: this.formatExpirationTime(config.expiresIn),
+      contactSupport: this.configService.get<string>('email.support'),
     });
 
     this.logger.debug(`Password reset email queued for: ${email}`);
