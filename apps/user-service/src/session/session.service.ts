@@ -52,7 +52,7 @@ export class SessionService {
         cacheKey,
         'revoke.timestamp',
       );
-      this.logger.debug(`Revoked at: `, revokedAt);
+      this.logger.debug(`Revoked at: ${revokedAt}`);
       if (revokedAt) {
         const revokedReason = await this.redisClient.hget(
           cacheKey,
@@ -87,7 +87,26 @@ export class SessionService {
     await this.redisClient.hset(cacheKey, 'revoke.reason', reason);
   }
 
-  async cacheSessionToken(
+  async renew(
+    token: string,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<{ token: string; expiresAt: string }> {
+    // Retrieve the user ID from token payload
+    const { sub: userId } = await this.tokenService.decode(token);
+    this.logger.debug(`Renew user ${userId}`);
+
+    // Generate new token
+    const newToken = await this.generateToken(userId, ipAddress, userAgent);
+    const { exp } = await this.tokenService.decode(newToken);
+
+    return {
+      token: newToken,
+      expiresAt: exp,
+    };
+  }
+
+  private async cacheSessionToken(
     token: string,
     ipAddress?: string,
     userAgent?: string,
