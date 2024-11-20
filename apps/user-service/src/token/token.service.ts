@@ -64,7 +64,7 @@ export class TokenService {
   private getTokenConfig(configKey: string): TokenConfig {
     const config = this.configService.get<TokenConfig>(configKey);
     if (!config) {
-      throw new Error(`${configKey} JWT configuration is missing`)
+      throw new Error(`${configKey} JWT configuration is missing`);
     }
     return config;
   }

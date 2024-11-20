@@ -12,12 +12,14 @@ import { REDIS_CLIENT } from './redis/constants/redis.constant';
 import { RedisModule } from './redis/redis.module';
 import { TokenModule } from './token/token.module';
 import Redis from 'ioredis';
+import { ConfigValidationSchema } from './config/schemas/config.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      validationSchema: ConfigValidationSchema,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

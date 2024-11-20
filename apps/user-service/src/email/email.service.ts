@@ -49,7 +49,7 @@ export class EmailService {
       const verificationLink = this.generateUrlWithQuery(config.url, { token });
 
       await this.queueEmail(email, 'Verify Your Email', 'email-verification', {
-        appName: this.configService.get<string>('appName'),
+        appName: this.configService.get<string>('app.name'),
         username,
         verificationLink,
         contactSupport: this.configService.get<string>('email.support'),
@@ -73,7 +73,7 @@ export class EmailService {
     const resetLink = this.generateUrlWithQuery(config.url, { token });
 
     await this.queueEmail(email, 'Password Reset Request', 'password-reset', {
-      appName: this.configService.get<string>('appName'),
+      appName: this.configService.get<string>('app.name'),
       username,
       resetLink,
       expiresIn: this.formatExpirationTime(config.expiresIn),
