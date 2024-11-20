@@ -4,7 +4,12 @@
   "sourceRoot": "src",
   "entryFile": "./apps/user-service/src/main",
   "compilerOptions": {
-    "assets": ["**/*.proto"],
+    "assets": [
+      {
+        "include": "email/templates/**/*",
+        "outDir": "dist/apps/user-service/src"
+      }
+    ],
     "watchAssets": true,
     "deleteOutDir": true
   }

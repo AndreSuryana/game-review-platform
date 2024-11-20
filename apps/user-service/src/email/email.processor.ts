@@ -46,15 +46,10 @@ export class EmailProcessor {
       throw new Error('Email address is required');
     }
 
-    // Logging
-    this.logger.debug(`Sending email to ${to}`);
-    this.logger.debug(`Subject: ${subject}`);
-    this.logger.debug(`Text: ${text}`);
-
     // Compose the email
     const transporter = this.emailConfigService.getTransporter();
     const mailOptions = {
-      from: `"${this.configService.get<string>('SMTP_FROM_NAME')}" <${this.configService.get<string>('SMTP_FROM_EMAIL')}>`,
+      from: this.configService.get<string>('EMAIL_NO_REPLY'),
       to,
       subject,
       text,
@@ -63,7 +58,7 @@ export class EmailProcessor {
 
     try {
       await transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent to ${to}`);
+      this.logger.log(`Email sent to ${to}: ${subject}`);
     } catch (e) {
       this.logger.error('Error sending email:', e);
     }

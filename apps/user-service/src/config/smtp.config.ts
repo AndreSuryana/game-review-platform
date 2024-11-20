@@ -3,6 +3,4 @@ export interface SmtpConfig {
   port: number;
   user: string;
   pass: string;
-  fromEmail: string;
-  fromName: string;
 }

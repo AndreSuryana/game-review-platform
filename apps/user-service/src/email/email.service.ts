@@ -6,6 +6,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { EmailVerificationConfig } from 'src/config/email-verification.config';
 import { PasswordResetConfig } from 'src/config/password-reset.config';
 import { EMAIL_QUEUE } from './constants/email.constant';
+import { EmailTemplateService } from './email-template.service';
 
 @Injectable()
 export class EmailService {
@@ -18,52 +19,67 @@ export class EmailService {
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly templateService: EmailTemplateService,
   ) {}
 
-  async sendVerificationEmail(email: string) {
-    const config =
-      this.configService.get<EmailVerificationConfig>('emailVerification');
+  async sendVerificationEmail(email: string, username: string) {
+    try {
+      const config =
+        this.configService.get<EmailVerificationConfig>('emailVerification');
 
-    const token = await this.authService.generateEmailVerificationToken(email);
-    const verificationLink = this.generateUrlWithQuery(config.url, { token });
+      const token =
+        await this.authService.generateEmailVerificationToken(email);
+      const verificationLink = this.generateUrlWithQuery(config.url, { token });
 
-    await this.emailQueue.add('send-email', {
-      to: email,
-      subject: 'Verify Your Email',
-      text: `Hello,\n\nPlease click the link below to verify your email address:\n\n${verificationLink}\n\nIf you did not request this email, you can safely ignore it.\n\nThank you,\nGame Review Platform Team`,
-      html: `
-        <p>Hello,</p>
-        <p>Please click the link below to verify your email address:</p>
-        <p>
-          <a href="${verificationLink}">Verify Your Email</a>
-        </p>
-        <p>If you did not request this email, you can safely ignore it.</p>
-        <p>Thank you,<br>Game Review Platform Team</p>
-      `,
-    });
+      const emailTemplate = this.templateService.renderTemplate(
+        'email-verification',
+        {
+          appName: this.configService.get<string>('appName'),
+          username,
+          verificationLink,
+          contactSupport: this.configService.get<string>('EMAIL_SUPPORT'),
+        },
+      );
 
-    this.logger.debug(`Verification email queued for: ${email}`);
+      await this.emailQueue.add('send-email', {
+        to: email,
+        subject: 'Verify Your Email',
+        text: this.templateService.convertHtmlToPlainText(emailTemplate),
+        html: emailTemplate,
+      });
+
+      this.logger.debug(`Verification email queued for: ${email}`);
+    } catch (e) {
+      this.logger.error('Error sending verification email:', e.stack);
+    }
   }
 
-  async sendPasswordResetEmail(userId: string, email: string) {
+  async sendPasswordResetEmail(
+    userId: string,
+    username: string,
+    email: string,
+  ) {
     const config = this.configService.get<PasswordResetConfig>('passwordReset');
 
     const token = await this.authService.generatePasswordResetToken(userId);
-    const passwordResetLink = this.generateUrlWithQuery(config.url, { token });
+    const resetLink = this.generateUrlWithQuery(config.url, { token });
+
+    const emailTemplate = this.templateService.renderTemplate(
+      'password-reset',
+      {
+        appName: this.configService.get<string>('appName'),
+        username,
+        resetLink,
+        expiresIn: this.formatExpirationTime(config.expiresIn),
+        contactSupport: this.configService.get<string>('EMAIL_SUPPORT'),
+      },
+    );
 
     await this.emailQueue.add('send-email', {
       to: email,
       subject: 'Password Reset Request',
-      text: `Hello,\n\nWe received a request to reset your password. If this was you, please click the link below to reset your password:\n\n${passwordResetLink}\n\nIf you did not request a password reset, you can safely ignore this email.\n\nThank you,\nGame Review Platform Team`,
-      html: `
-        <p>Hello,</p>
-        <p>We received a request to reset your password. If this was you, please click the link below to reset your password:</p>
-        <p>
-          <a href="${passwordResetLink}">Reset Your Password</a>
-        </p>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-        <p>Thank you,<br>Game Review Platform Team</p>
-      `,
+      text: this.templateService.convertHtmlToPlainText(emailTemplate),
+      html: emailTemplate,
     });
 
     this.logger.debug(`Password reset email queued for: ${email}`);
@@ -80,5 +96,52 @@ export class EmailService {
     });
 
     return urlObj.toString();
+  }
+
+  private formatExpirationTime(expiration: string): string {
+    // Regex to match the number followed by the unit (e.g., "2m", "1h", "3d")
+    const regex = /^(\d+)([smhdwMy])$/;
+    const match = expiration.match(regex);
+
+    if (!match) {
+      throw new Error(
+        'Invalid format for expiration time. Expected format: number followed by a time unit (s, m, h, d, w, M, y)',
+      );
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    let timeString = '';
+
+    switch (unit) {
+      case 's': // seconds
+        timeString = `${value} second${value > 1 ? 's' : ''}`;
+        break;
+      case 'm': // minutes
+        timeString = `${value} minute${value > 1 ? 's' : ''}`;
+        break;
+      case 'h': // hours
+        timeString = `${value} hour${value > 1 ? 's' : ''}`;
+        break;
+      case 'd': // days
+        timeString = `${value} day${value > 1 ? 's' : ''}`;
+        break;
+      case 'w': // weeks
+        timeString = `${value} week${value > 1 ? 's' : ''}`;
+        break;
+      case 'M': // months
+        timeString = `${value} month${value > 1 ? 's' : ''}`;
+        break;
+      case 'y': // years
+        timeString = `${value} year${value > 1 ? 's' : ''}`;
+        break;
+      default:
+        throw new Error(
+          'Unsupported time unit. Allowed units: s, m, h, d, w, M, y',
+        );
+    }
+
+    return timeString;
   }
 }

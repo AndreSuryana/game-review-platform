@@ -1,4 +1,5 @@
 export default () => ({
+  appName: process.env.APP_NAME || 'Game Review Platform',
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 5001,
   logLevel: process.env.LOG_LEVEL || 'info',
@@ -40,7 +41,5 @@ export default () => ({
     port: parseInt(process.env.SMTP_PORT, 10) || 25,
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    fromEmail: process.env.SMTP_FROM_EMAIL,
-    fromName: process.env.SMTP_FROM_NAME,
   },
 });

@@ -8,6 +8,7 @@ import { REDIS_CLIENT } from 'src/redis/constants/redis.constant';
 import { RedisModule } from 'src/redis/redis.module';
 import { EmailConfigService } from './config/email-config.service';
 import { EMAIL_QUEUE } from './constants/email.constant';
+import { EmailTemplateService } from './email-template.service';
 
 @Module({
   imports: [
@@ -22,7 +23,12 @@ import { EMAIL_QUEUE } from './constants/email.constant';
     }),
     forwardRef(() => AuthModule),
   ],
-  providers: [EmailService, EmailProcessor, EmailConfigService],
+  providers: [
+    EmailService,
+    EmailProcessor,
+    EmailConfigService,
+    EmailTemplateService,
+  ],
   exports: [EmailService],
 })
 export class EmailModule {}

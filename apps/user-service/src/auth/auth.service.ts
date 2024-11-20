@@ -57,7 +57,7 @@ export class AuthService {
     });
     this.logger.debug(`New user successfully added! ${newUser.id}`);
 
-    this.emailService.sendVerificationEmail(newUser.email);
+    this.emailService.sendVerificationEmail(newUser.email, newUser.username);
 
     return newUser.id;
   }
@@ -151,7 +151,11 @@ export class AuthService {
       throw new NotFoundException('Could not find the user');
     }
 
-    this.emailService.sendPasswordResetEmail(user.id, user.email);
+    this.emailService.sendPasswordResetEmail(
+      user.id,
+      user.username,
+      user.email,
+    );
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -183,7 +187,7 @@ export class AuthService {
       throw new BadRequestException('Email is already verified');
     }
 
-    this.emailService.sendVerificationEmail(user.email);
+    this.emailService.sendVerificationEmail(user.email, user.username);
   }
 
   async verifyEmail(token: string): Promise<void> {
