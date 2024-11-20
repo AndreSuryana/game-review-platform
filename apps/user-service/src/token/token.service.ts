@@ -57,6 +57,15 @@ export class TokenService {
     }
   }
 
+  async decode(token: string): Promise<any> {
+    try {
+      return await this.jwtService.decode(token);
+    } catch (e) {
+      this.logger.error(`Error verifying token: ${e.message}`, e.stack);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
   async hashToken(token: string): Promise<string> {
     return hash(token, 10);
   }

@@ -4,7 +4,6 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { hash } from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
@@ -12,18 +11,19 @@ import { RedisConfig } from 'src/config/redis.config';
 import { REDIS_CLIENT } from 'src/redis/constants/redis.constant';
 import Redis from 'ioredis';
 import { RevokeReason } from './enums/revoke-reason.enum';
+import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class SessionService {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
-  ) {}
-
   private readonly logger: Logger = new Logger(SessionService.name, {
     timestamp: true,
   });
+
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
+    private readonly configService: ConfigService,
+    private readonly tokenService: TokenService,
+  ) {}
 
   async generateToken(
     userId: string,
@@ -32,7 +32,7 @@ export class SessionService {
   ): Promise<string> {
     const jti = uuidv4();
     const payload = { sub: userId, jti };
-    const token = await this.jwtService.signAsync(payload);
+    const { token } = await this.tokenService.generate(payload, 'session');
     this.logger.debug(
       `Created session info: ip=${ipAddress}, userAgent=${userAgent}`,
     );
@@ -44,7 +44,7 @@ export class SessionService {
 
   async verifyToken(token: string): Promise<any> {
     try {
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.tokenService.verify(token, 'session');
       const cacheKey = `session:${payload.jti}`;
 
       // Check for token revocation
@@ -76,7 +76,7 @@ export class SessionService {
   }
 
   async revoke(token: string, reason: RevokeReason): Promise<void> {
-    const payload = await this.jwtService.decode(token);
+    const payload = await this.tokenService.decode(token);
     const cacheKey = `session:${payload.jti}`;
 
     await this.redisClient.hset(
@@ -92,7 +92,7 @@ export class SessionService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<void> {
-    const payload = await this.jwtService.decode(token);
+    const payload = await this.tokenService.decode(token);
 
     if (
       !payload ||
