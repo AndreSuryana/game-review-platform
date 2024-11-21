@@ -45,14 +45,17 @@ export class SessionService {
   async verifyToken(token: string): Promise<any> {
     try {
       const payload = await this.tokenService.verify(token, 'session');
-      const cacheKey = `session:${payload.jti}`;
+      const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
-      // Check for token revocation
+      if (payload.exp < now) {
+        throw new UnauthorizedException('Session token has expired');
+      }
+
+      const cacheKey = `session:${payload.jti}`;
       const revokedAt = await this.redisClient.hget(
         cacheKey,
         'revoke.timestamp',
       );
-      this.logger.debug(`Revoked at: ${revokedAt}`);
       if (revokedAt) {
         const revokedReason = await this.redisClient.hget(
           cacheKey,
@@ -140,6 +143,6 @@ export class SessionService {
     const ttl = payload.exp - payload.iat + threshold;
 
     await this.redisClient.expire(cacheKey, ttl);
-    this.logger.debug(`Session token cached: ${cacheKey}`);
+    this.logger.debug(`Session "${cacheKey}" cached with TTL ${ttl}`);
   }
 }
