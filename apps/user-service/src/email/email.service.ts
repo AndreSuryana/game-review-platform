@@ -30,12 +30,19 @@ export class EmailService {
       placeholders,
     );
 
-    await this.emailQueue.add('send-email', {
-      to,
-      subject,
-      text: this.templateService.convertHtmlToPlainText(emailTemplate),
-      html: emailTemplate,
-    });
+    await this.emailQueue.add(
+      'send-email',
+      {
+        to,
+        subject,
+        text: this.templateService.convertHtmlToPlainText(emailTemplate),
+        html: emailTemplate,
+      },
+      {
+        attempts: 3, // Retry 3 times on failure
+        backoff: 5000, // 5 seconds delay between retries
+      },
+    );
 
     this.logger.log(`Email queued for: ${to}, Subject: ${subject}`);
   }

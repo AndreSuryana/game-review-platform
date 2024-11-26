@@ -26,13 +26,9 @@ export class EmailProcessor {
       { connection: this.redisClient },
     );
 
-    worker.on('completed', (job) => {
-      this.logger.log(`Job ${job.id} has been completed!`);
-    });
-
-    worker.on('failed', (job, err) => {
-      this.logger.error(`Job ${job?.id} has failed: ${err.message}`);
-    });
+    // Register hooks
+    worker.on('completed', this.onCompleted.bind(this));
+    worker.on('failed', this.onFailed.bind(this));
   }
 
   async processJob(job: Job) {
@@ -57,6 +53,23 @@ export class EmailProcessor {
       this.logger.log(`Email sent to ${to}: ${subject}`);
     } catch (e) {
       this.logger.error('Error sending email:', e);
+      throw e; // Throw the exception to allow retry
+    }
+  }
+
+  private onCompleted(job: Job) {
+    this.logger.log(`Email job ${job.id} has been completed!`);
+  }
+
+  private onFailed(job: Job, err: Error) {
+    this.logger.error(`Email job ${job?.id} has failed on attempt ${job.attemptsMade}: ${err.message}`);
+
+    // Check if job has exhausted all attempts
+    if (job.attemptsMade >= job.opts.attempts) {
+      this.logger.warn(
+        `Max attempts reached for job ${job.id}. Storing in failed emails.`,
+      );
+      // TODO: Save failed email to the database or log for manual retries
     }
   }
 }
