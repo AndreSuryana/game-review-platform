@@ -9,13 +9,7 @@ import { TokenModule } from 'src/token/token.module';
 import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [
-    SessionModule,
-    RedisModule,
-    EmailModule,
-    TokenModule,
-    UserModule,
-  ],
+  imports: [SessionModule, RedisModule, EmailModule, TokenModule, UserModule],
   controllers: [AuthController],
   providers: [AuthService, SessionService],
   exports: [AuthService],

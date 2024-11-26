@@ -13,6 +13,7 @@ import { RedisModule } from './redis/redis.module';
 import { TokenModule } from './token/token.module';
 import Redis from 'ioredis';
 import { ConfigValidationSchema } from './config/schemas/config.schema';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ConfigValidationSchema } from './config/schemas/config.schema';
     EmailModule,
     RedisModule,
     TokenModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}
