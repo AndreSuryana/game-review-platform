@@ -62,7 +62,9 @@ export class EmailProcessor {
   }
 
   private onFailed(job: Job, err: Error) {
-    this.logger.error(`Email job ${job?.id} has failed on attempt ${job.attemptsMade}: ${err.message}`);
+    this.logger.error(
+      `Email job ${job?.id} has failed on attempt ${job.attemptsMade}: ${err.message}`,
+    );
 
     // Check if job has exhausted all attempts
     if (job.attemptsMade >= job.opts.attempts) {

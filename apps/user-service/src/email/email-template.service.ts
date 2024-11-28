@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import Handlebars from 'handlebars';
 import { join } from 'path';
@@ -14,11 +14,11 @@ export class EmailTemplateService {
   constructor() {
     this.registerTemplates();
   }
-  
+
   /**
    * Preload and register Handlebars templates during module initialization.
-  */
- private registerTemplates() {
+   */
+  private registerTemplates() {
     const files = readdirSync(this.templateDir);
     this.logger.log(`Loading templates from: ${this.templateDir}`);
 
